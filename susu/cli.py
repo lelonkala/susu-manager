@@ -1,7 +1,3 @@
-"""Interactive command-line shell for a susu group.
-
-Run with:  python -m susu
-"""
 from __future__ import annotations
 
 import shlex
@@ -46,7 +42,6 @@ class Shell:
         return self.group
 
     def execute(self, line: str) -> str:
-        """Run one command line and return the text to print."""
         parts = shlex.split(line)
         if not parts:
             return ""
@@ -104,7 +99,7 @@ def main() -> None:
             break
         try:
             out = shell.execute(line)
-        except ValueError as e:  # e.g. unbalanced quotes
+        except ValueError as e:
             out = f"Error: {e}"
         if out:
             print(out)
