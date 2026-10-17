@@ -4,6 +4,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from .errors import SusuError
+from .money import format_ghs
 
 
 @dataclass(frozen=True)
@@ -82,7 +83,7 @@ class Group:
             raise SusuError("amount must be greater than zero")
         owed = self.weekly_amount - self._paid[member]
         if amount > owed:
-            raise SusuError(f"{member} only owes {owed} pesewas this week; payment too large")
+            raise SusuError(f"{member} only owes {format_ghs(owed)} this week; payment too large")
         self._paid[member] += amount
         return owed - amount
 
