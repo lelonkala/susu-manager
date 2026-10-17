@@ -57,3 +57,31 @@ class Group:
     def started(self) -> bool:
         """The group is locked once any money has been recorded or paid out."""
         return self.current_week > 1 or any(self._paid.values())
+
+    # ---- contributions -------------------------------------------------
+    @property
+    def finished(self) -> bool:
+        """True once every member has received the pot."""
+        return bool(self._members) and len(self.payouts) == len(self._members)
+
+    def owed(self, name: str) -> int:
+        """Pesewas the member still owes for the current week."""
+        return self.weekly_amount - self._paid[self._find(name)]
+
+    def record_contribution(self, name: str, amount: int, week: int | None = None) -> int:
+        """Record a (possibly partial) payment; returns the remaining balance."""
+        if self.finished:
+            raise SusuError("the susu is complete: every member has been paid")
+        if week is not None and week != self.current_week:
+            raise SusuError(
+                f"can only record contributions for the current week "
+                f"({self.current_week}), not week {week}"
+            )
+        member = self._find(name)
+        if amount <= 0:
+            raise SusuError("amount must be greater than zero")
+        owed = self.weekly_amount - self._paid[member]
+        if amount > owed:
+            raise SusuError(f"{member} only owes {owed} pesewas this week; payment too large")
+        self._paid[member] += amount
+        return owed - amount
