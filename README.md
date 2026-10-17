@@ -52,3 +52,6 @@ python -m unittest -v
 - `tests/` – unit tests for each layer
 
 Assumptions and design decisions are in [NOTES.md](NOTES.md).
+
+## Author
+Prudence Nkala
