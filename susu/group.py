@@ -85,3 +85,58 @@ class Group:
             raise SusuError(f"{member} only owes {owed} pesewas this week; payment too large")
         self._paid[member] += amount
         return owed - amount
+
+    # ---- closing a week ------------------------------------------------
+    def outstanding(self) -> dict[str, int]:
+        """Members who still owe for the current week -> pesewas owed."""
+        return {m: self.weekly_amount - p for m, p in self._paid.items() if p < self.weekly_amount}
+
+    def close_week(self) -> CloseResult:
+        if self.finished:
+            raise SusuError("the susu is complete: every member has been paid")
+        if not self._members:
+            raise SusuError("cannot close a week with no members")
+        owing = self.outstanding()
+        if owing:
+            return CloseResult(closed=False, week=self.current_week, owing=owing)
+        recipient = self._members[len(self.payouts)]
+        payout = Payout(self.current_week, recipient, self.weekly_amount * len(self._members))
+        self.payouts.append(payout)
+        self.current_week += 1
+        self._paid = {m: 0 for m in self._members}
+        return CloseResult(closed=True, week=payout.week, owing={}, payout=payout)
+
+    # ---- report --------------------------------------------------------
+    def report(self) -> Report:
+        paid_full = [m for m in self._members if self._paid[m] >= self.weekly_amount]
+        next_up = None
+        if self._members and not self.finished:
+            next_up = self._members[len(self.payouts)]
+        return Report(
+            week=self.current_week,
+            finished=self.finished,
+            weekly_amount=self.weekly_amount,
+            next_recipient=next_up,
+            paid_in_full=paid_full,
+            owing=self.outstanding(),
+            payouts=list(self.payouts),
+        )
+
+
+@dataclass(frozen=True)
+class CloseResult:
+    closed: bool
+    week: int
+    owing: dict
+    payout: Payout | None = None
+
+
+@dataclass(frozen=True)
+class Report:
+    week: int
+    finished: bool
+    weekly_amount: int
+    next_recipient: str | None
+    paid_in_full: list
+    owing: dict
+    payouts: list
